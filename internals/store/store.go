@@ -1,23 +1,23 @@
-package main
+package store
 
 import (
 	"sync"
 )
 
-type inMemoryStore struct {
+type InMemoryStore struct {
 	mu    sync.RWMutex
 	items map[string]string
 }
 
-func NewInMemoryStore() *inMemoryStore {
-	store := &inMemoryStore{
+func NewInMemoryStore() *InMemoryStore {
+	store := &InMemoryStore{
 		items: make(map[string]string),
 	}
 
 	return store
 }
 
-func (s *inMemoryStore) Get(key string) (string, bool) {
+func (s *InMemoryStore) Get(key string) (string, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -25,14 +25,14 @@ func (s *inMemoryStore) Get(key string) (string, bool) {
 	return val, exists
 }
 
-func (s *inMemoryStore) Set(key string, value string) {
+func (s *InMemoryStore) Set(key string, value string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.items[key] = value
 }
 
-func (s *inMemoryStore) Del(key string) bool {
+func (s *InMemoryStore) Del(key string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -44,7 +44,7 @@ func (s *inMemoryStore) Del(key string) bool {
 	return false
 }
 
-func (s *inMemoryStore) Exists(key string) bool {
+func (s *InMemoryStore) Exists(key string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 

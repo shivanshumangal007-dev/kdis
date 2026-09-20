@@ -5,9 +5,10 @@ import (
 	"net"
 
 	"github.com/shivanshumangal007-dev/kdis/internals/resp"
+	"github.com/shivanshumangal007-dev/kdis/internals/store"
 )
 
-func HandleConnection(conn net.Conn) {
+func HandleConnection(conn net.Conn, s *store.InMemoryStore) {
 	defer conn.Close()
 	reader := bufio.NewReader(conn)
 	// buf := make([]byte, 1024)
@@ -17,15 +18,15 @@ func HandleConnection(conn net.Conn) {
 			return
 		}
 
-		ans := dispatch(args)
+		ans := dispatch(args, s)
 		conn.Write([]byte(ans))
 	}
 }
 
-func dispatch(args []string) string {
+func dispatch(args []string, s *store.InMemoryStore) string {
 	if len(args) == 0 {
 		return "-ERR empty commands"
 	}
 
-	return resp.RespReplyDecoder(args)
+	return resp.RespReplyEncoder(args, s)
 }

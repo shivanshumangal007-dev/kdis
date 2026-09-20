@@ -3,9 +3,11 @@ package resp
 import (
 	"fmt"
 	"strings"
+
+	"github.com/shivanshumangal007-dev/kdis/internals/store"
 )
 
-func RespReplyDecoder(args []string) string {
+func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 	cmd := strings.ToUpper(args[0])
 	switch cmd {
 	case "PING":

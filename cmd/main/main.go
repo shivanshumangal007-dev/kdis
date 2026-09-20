@@ -5,8 +5,8 @@ import (
 	"net"
 
 	"github.com/shivanshumangal007-dev/kdis/internals/helpers"
+	"github.com/shivanshumangal007-dev/kdis/internals/store"
 )
-
 
 func main() {
 	port := ":6379"
@@ -20,6 +20,7 @@ func main() {
 
 	fmt.Println("listening on the port: ", port)
 
+	s := store.NewInMemoryStore()
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -27,6 +28,6 @@ func main() {
 			return
 		}
 		// fmt.Println("got one connection:" , conn.LocalAddr())
-		go helpers.HandleConnection(conn)
+		go helpers.HandleConnection(conn, s)
 	}
 }
