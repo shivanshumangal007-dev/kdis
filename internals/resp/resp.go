@@ -2,6 +2,7 @@ package resp
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/shivanshumangal007-dev/kdis/internals/store"
@@ -54,6 +55,27 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 			return ":1\r\n"
 		}
 		return ":0\r\n"
+	case "EXPIRE":
+		if len(args) != 3 { // SET key value
+			return "-ERR wrong number of arguments for 'EXPIRES' command\r\n"
+		}
+		second, err := strconv.Atoi(args[2])
+		if err != nil {
+			return "-ERR value is not an integer or out of range\r\n"
+		}
+		ans := s.Expire(args[1], second)
+		if ans {
+			return ":1\r\n"
+		}
+		return ":0\r\n"
+
+	case "TTL":
+		if len(args) != 2 { // SET key value
+			return "-ERR wrong number of arguments for 'TTL' command\r\n"
+		}
+		remain := s.Ttl(args[1])
+		return fmt.Sprintf(":%d\r\n", remain)
+
 	default:
 		return fmt.Sprintf("-ERR unknown command '%s'\r\n", cmd)
 	}

@@ -85,3 +85,31 @@ func (s *InMemoryStore) Exists(key string) bool {
 	}
 	return true
 }
+
+func (s *InMemoryStore) Expire(key string, seconds int) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	val, found := s.items[key]
+	if !found || isExpired(val) {
+		return false
+	}
+
+	val.expiresAt = time.Now().Add(time.Duration(seconds) * time.Second)
+	s.items[key] = val
+	return true
+}
+
+func (s *InMemoryStore) Ttl(key string) int64 {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	val, found := s.items[key]
+
+	if !found || isExpired(val) {
+		return -2
+	} else if val.expiresAt.IsZero() {
+		return -1
+	}
+	return int64(time.Until(val.expiresAt).Seconds())
+
+}
