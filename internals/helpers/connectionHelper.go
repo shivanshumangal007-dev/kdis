@@ -25,7 +25,7 @@ func HandleConnection(conn net.Conn, s *store.InMemoryStore) {
 
 func dispatch(args []string, s *store.InMemoryStore) string {
 	if len(args) == 0 {
-		return "-ERR empty commands"
+		return "-ERR empty commands\r\n"
 	}
 
 	return resp.RespReplyEncoder(args, s)

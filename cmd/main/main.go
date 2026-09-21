@@ -21,6 +21,7 @@ func main() {
 	fmt.Println("listening on the port: ", port)
 
 	s := store.NewInMemoryStore()
+	go store.ExpiredKeysRemover(s)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
