@@ -5,15 +5,29 @@ import (
 	"time"
 )
 
+
+type ValueType int
+
+const (
+	TypeString ValueType = iota
+	TypeList
+	TypeHash
+	TypeSet
+)
+
+type valueStore struct {
+	kind      ValueType
+	strVal    string
+	listVal   []string
+	hashVal   map[string]string
+	setVal    map[string]struct{}
+	expiresAt time.Time
+}
+
 type InMemoryStore struct {
 	mu    sync.RWMutex
 	items map[string]valueStore
 }
-type valueStore struct {
-	value     string
-	expiresAt time.Time
-}
-
 func NewInMemoryStore() *InMemoryStore {
 	store := &InMemoryStore{
 		items: make(map[string]valueStore),
@@ -30,7 +44,7 @@ func (s *InMemoryStore) Get(key string) (string, bool) {
 		if !found {
 			return "", false
 		}
-		return val.value, true
+		return val.strVal, true
 	}
 	s.mu.RUnlock()
 
@@ -43,7 +57,7 @@ func (s *InMemoryStore) Get(key string) (string, bool) {
 		if !found {
 			return "", false
 		}
-		return val.value, true
+		return val.strVal, true
 	}
 	delete(s.items, key)
 	return "", false
@@ -54,7 +68,7 @@ func (s *InMemoryStore) Set(key string, value string) {
 	defer s.mu.Unlock()
 
 	val := valueStore{
-		value: value,
+		strVal: value,
 	}
 	s.items[key] = val
 }
