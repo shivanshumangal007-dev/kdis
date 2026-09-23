@@ -28,11 +28,11 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		return "+OK\r\n"
 
 	case "GET":
-		if len(args) != 2 { // SET key value
+		if len(args) != 2 { // GET key
 			return "-ERR wrong number of arguments for 'GET' command\r\n"
 		}
 		val, found, err := s.Get(args[1])
-		if err != nil{
+		if err != nil {
 			return fmt.Sprintf("-%s\r\n", err)
 		}
 		if found == true {
@@ -41,7 +41,7 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		return "$-1\r\n"
 
 	case "DEL":
-		if len(args) != 2 { // SET key value
+		if len(args) != 2 { // DEL key
 			return "-ERR wrong number of arguments for 'DEL' command\r\n"
 		}
 		found := s.Del(args[1])
@@ -50,7 +50,7 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		}
 		return ":0\r\n"
 	case "EXISTS":
-		if len(args) != 2 { // SET key value
+		if len(args) != 2 { // EXIST key
 			return "-ERR wrong number of arguments for 'EXISTS' command\r\n"
 		}
 		found := s.Exists(args[1])
@@ -59,7 +59,7 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		}
 		return ":0\r\n"
 	case "EXPIRE":
-		if len(args) != 3 { // SET key value
+		if len(args) != 3 { // EXPIRE key value
 			return "-ERR wrong number of arguments for 'EXPIRES' command\r\n"
 		}
 		second, err := strconv.Atoi(args[2])
@@ -73,34 +73,63 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		return ":0\r\n"
 
 	case "TTL":
-		if len(args) != 2 { // SET key value
+		if len(args) != 2 { // TTL key
 			return "-ERR wrong number of arguments for 'TTL' command\r\n"
 		}
 		remain := s.Ttl(args[1])
 		return fmt.Sprintf(":%d\r\n", remain)
-	
+
 	case "LPUSH":
-		if len(args) < 3{ // LPUSH key value values[]
+		if len(args) < 3 { // LPUSH key value values[]
 			return "-ERR wrong number of arguments for 'LPUSH' command\r\n"
 		}
 
 		len, err := s.Lpush(args[1], args[2:]...)
-		if err != nil{
+		if err != nil {
 			return fmt.Sprintf("-%s\r\n", err)
 		}
 
 		return fmt.Sprintf(":%d\r\n", len)
 	case "RPUSH":
-		if len(args) < 3{ // LPUSH key value values[]
+		if len(args) < 3 { // LPUSH key value values[]
 			return "-ERR wrong number of arguments for 'RPUSH' command\r\n"
 		}
 
 		len, err := s.Rpush(args[1], args[2:]...)
-		if err != nil{
+		if err != nil {
 			return fmt.Sprintf("-%s\r\n", err)
 		}
 
 		return fmt.Sprintf(":%d\r\n", len)
+
+	case "LRANGE":
+		if len(args) != 4 { // LRANGE key start stop
+			return "-ERR wrong number of arguments for 'LRANGE' command\r\n"
+		}
+		start, err := strconv.Atoi(args[2])
+		if err != nil {
+			return "-ERR start srgument should be a number\r\n"
+		}
+		stop, err := strconv.Atoi(args[3])
+		if err != nil {
+			return "-ERR stop srgument should be a number\r\n"
+		}
+		stringArr, found, err := s.Lrange(args[1], start, stop)
+		if err != nil {
+			return fmt.Sprintf("-%s\r\n", err)
+		}
+		if !found {
+			return "$-1\r\n"
+		}
+		var retStr strings.Builder
+
+		// retStr.WriteString(fmt.Sprintf())
+		fmt.Fprintf(&retStr, "*%d\r\n", len(stringArr))
+		for _, str := range stringArr {
+			// retStr.WriteString(fmt.Sprintf())
+			fmt.Fprintf(&retStr, "$%d\r\n%s\r\n", len(str), str)
+		}
+		return retStr.String()
 
 	default:
 		return fmt.Sprintf("-ERR unknown command '%s'\r\n", cmd)

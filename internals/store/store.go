@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -171,4 +172,45 @@ func (s *InMemoryStore) Rpush(key string, values ...string) (int, error) {
 	val.listVal = newList
 	s.items[key] = val
 	return len(val.listVal), nil
+}
+
+func (s *InMemoryStore) Lrange(key string, start int, stop int) ([]string, bool, error) {
+	if start < 0 || stop < 0 {
+		return nil, false, fmt.Errorf("WRONG-ARGUMENTS start and stop cant be negative as of now")
+	}
+	s.mu.RLock()
+	val, found := s.items[key]
+	if !found || !isExpired(val) {
+		s.mu.RUnlock()
+		if !found {
+			return nil, false, nil
+		}
+		if err := checktype(val, TypeList); err != nil {
+			return nil, false, err
+		}
+		if stop >= len(val.listVal) {
+			stop = len(val.listVal) - 1
+		}
+		if start < 0 || start > stop || len(val.listVal) == 0 {
+			return nil, false, nil
+
+		}
+		return []string(val.listVal[start:stop+1]), true, nil
+	}
+
+	s.mu.RUnlock()
+
+	// slow path: it was expired, so escalate to a write lock to clean it up
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	val, found = s.items[key] // re-check!
+	if !found || !isExpired(val) {
+		if !found {
+			return nil, false, nil
+		}
+		return []string(val.listVal[start:stop]), true, nil
+	}
+	delete(s.items, key)
+	return nil, false, nil
 }
