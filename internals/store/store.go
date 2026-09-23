@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-
 type ValueType int
 
 const (
@@ -28,6 +27,7 @@ type InMemoryStore struct {
 	mu    sync.RWMutex
 	items map[string]valueStore
 }
+
 func NewInMemoryStore() *InMemoryStore {
 	store := &InMemoryStore{
 		items: make(map[string]valueStore),
@@ -126,4 +126,45 @@ func (s *InMemoryStore) Ttl(key string) int64 {
 	}
 	return int64(time.Until(val.expiresAt).Seconds())
 
+}
+func (s *InMemoryStore) Lpush(key string, values ...string) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	val, found := s.items[key]
+	if !found || isExpired(val) {
+		val = valueStore{kind: TypeList}
+	} else if err := checktype(val, TypeList); err != nil {
+		return -1, err
+	}
+
+	newList := make([]string, 0, len(values)+len(val.listVal))
+	for i := len(values) - 1; i >= 0; i-- { 
+		newList = append(newList, values[i])
+	}
+	newList = append(newList, val.listVal...)
+
+	val.listVal = newList
+	s.items[key] = val
+	return len(newList), nil
+}
+
+func (s *InMemoryStore) Rpush(key string, values ...string) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	val, found := s.items[key]
+	if !found || isExpired(val) {
+		val = valueStore{kind: TypeList}
+	} else if err := checktype(val, TypeList); err != nil {
+		return -1, err
+	}
+
+	newList := make([]string, 0, len(values) + len(val.listVal));
+	newList = append(newList, val.listVal...)
+	newList = append(newList, values...)
+
+	val.listVal = newList
+	s.items[key] = val
+ 	return len(val.listVal), nil
 }

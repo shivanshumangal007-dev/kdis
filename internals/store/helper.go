@@ -11,7 +11,7 @@ func isExpired(v valueStore) bool {
 
 func checktype(v valueStore, wanted ValueType) error{
 	if v.kind != wanted{
-		fmt.Errorf("WRONGTYPE Operation against a key holding the wrong kind of value")
+		return fmt.Errorf("WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 	return nil
 }
