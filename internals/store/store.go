@@ -36,16 +36,20 @@ func NewInMemoryStore() *InMemoryStore {
 	return store
 }
 
-func (s *InMemoryStore) Get(key string) (string, bool) {
+func (s *InMemoryStore) Get(key string) (string, bool, error) {
 	s.mu.RLock()
 	val, found := s.items[key]
 	if !found || !isExpired(val) {
 		s.mu.RUnlock()
 		if !found {
-			return "", false
+			return "", false, nil
 		}
-		return val.strVal, true
+		if err := checktype(val, TypeString); err != nil {
+			return "", false, err
+		}
+		return val.strVal, true, nil
 	}
+
 	s.mu.RUnlock()
 
 	// slow path: it was expired, so escalate to a write lock to clean it up
@@ -55,12 +59,12 @@ func (s *InMemoryStore) Get(key string) (string, bool) {
 	val, found = s.items[key] // re-check!
 	if !found || !isExpired(val) {
 		if !found {
-			return "", false
+			return "", false, nil
 		}
-		return val.strVal, true
+		return val.strVal, true, nil
 	}
 	delete(s.items, key)
-	return "", false
+	return "", false, nil
 }
 
 func (s *InMemoryStore) Set(key string, value string) {
@@ -139,7 +143,7 @@ func (s *InMemoryStore) Lpush(key string, values ...string) (int, error) {
 	}
 
 	newList := make([]string, 0, len(values)+len(val.listVal))
-	for i := len(values) - 1; i >= 0; i-- { 
+	for i := len(values) - 1; i >= 0; i-- {
 		newList = append(newList, values[i])
 	}
 	newList = append(newList, val.listVal...)
@@ -160,11 +164,11 @@ func (s *InMemoryStore) Rpush(key string, values ...string) (int, error) {
 		return -1, err
 	}
 
-	newList := make([]string, 0, len(values) + len(val.listVal));
+	newList := make([]string, 0, len(values)+len(val.listVal))
 	newList = append(newList, val.listVal...)
 	newList = append(newList, values...)
 
 	val.listVal = newList
 	s.items[key] = val
- 	return len(val.listVal), nil
+	return len(val.listVal), nil
 }

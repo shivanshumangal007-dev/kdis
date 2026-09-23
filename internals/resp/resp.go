@@ -31,7 +31,10 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		if len(args) != 2 { // SET key value
 			return "-ERR wrong number of arguments for 'GET' command\r\n"
 		}
-		val, found := s.Get(args[1])
+		val, found, err := s.Get(args[1])
+		if err != nil{
+			return fmt.Sprintf("-%s\r\n", err)
+		}
 		if found == true {
 			return fmt.Sprintf("$%d\r\n%s\r\n", len(val), val)
 		}
@@ -75,6 +78,29 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		}
 		remain := s.Ttl(args[1])
 		return fmt.Sprintf(":%d\r\n", remain)
+	
+	case "LPUSH":
+		if len(args) < 3{ // LPUSH key value values[]
+			return "-ERR wrong number of arguments for 'LPUSH' command\r\n"
+		}
+
+		len, err := s.Lpush(args[1], args[2:]...)
+		if err != nil{
+			return fmt.Sprintf("-%s\r\n", err)
+		}
+
+		return fmt.Sprintf(":%d\r\n", len)
+	case "RPUSH":
+		if len(args) < 3{ // LPUSH key value values[]
+			return "-ERR wrong number of arguments for 'RPUSH' command\r\n"
+		}
+
+		len, err := s.Rpush(args[1], args[2:]...)
+		if err != nil{
+			return fmt.Sprintf("-%s\r\n", err)
+		}
+
+		return fmt.Sprintf(":%d\r\n", len)
 
 	default:
 		return fmt.Sprintf("-ERR unknown command '%s'\r\n", cmd)
