@@ -131,6 +131,53 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		}
 		return retStr.String()
 
+	case "HSET":
+		if len(args) != 4 { // HSET key field value
+			return "-ERR wrong number of arguments for 'HSET' command\r\n"
+		}
+
+		isSet, err := s.Hset(args[1], args[2], args[3])
+		if err != nil {
+			return fmt.Sprintf("-%s\r\n", err)
+		}
+		if isSet {
+			return ":1\r\n"
+		}
+		return ":0\r\n"
+
+	case "HGET":
+		if len(args) != 3 { // HGET key field
+			return "-ERR wrong number of arguments for 'HGET' command\r\n"
+		}
+		val, found, err := s.Hget(args[1], args[2])
+		if err != nil {
+			return fmt.Sprintf("-%s\r\n", err)
+		}
+
+		if !found {
+			return "$-1\r\n"
+		}
+		return fmt.Sprintf("$%d\r\n%s\r\n", len(val), val)
+
+	case "HGETALL":
+		if len(args) != 2 { // HGETALL key
+			return "-ERR wrong number of arguments for 'HGETALL' command\r\n"
+		}
+
+		val, found, err := s.HgetALL(args[1])
+		if err != nil {
+			return fmt.Sprintf("-%s\r\n", err)
+		}
+		if !found {
+			return "*0\r\n"
+		}
+		var rtStr strings.Builder
+		fmt.Fprintf(&rtStr, "*%d\r\n", len(val)*2)
+		for key, value := range val {
+			fmt.Fprintf(&rtStr, "$%d\r\n%s\r\n$%d\r\n%s\r\n", len(key), key, len(value), value)
+		}
+
+		return rtStr.String()
 	default:
 		return fmt.Sprintf("-ERR unknown command '%s'\r\n", cmd)
 	}

@@ -222,6 +222,7 @@ func (s *InMemoryStore) Hset(key string, field string, value string) (bool, erro
 	if !found || isExpired(val) {
 		val = valueStore{
 			kind: TypeHash,
+			hashVal: map[string]string{},
 		}
 	} else if err := checktype(val, TypeHash); err != nil {
 		return false, err
@@ -261,7 +262,6 @@ func (s *InMemoryStore) Hget(key string, field string) (string, bool, error) {
 	// slow path: it was expired, so escalate to a write lock to clean it up
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
 	val, found = s.items[key] // re-check!
 	if !found || !isExpired(val) {
 		if !found {
