@@ -1,3 +1,3 @@
 module github.com/shivanshumangal007-dev/kdis
 
-go 1.26.4
+go 1.20
