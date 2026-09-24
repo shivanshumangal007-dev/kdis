@@ -223,7 +223,7 @@ func (s *InMemoryStore) Hset(key string, field string, value string) (bool, erro
 		val = valueStore{
 			kind: TypeHash,
 		}
-	}else if err := checktype(val, TypeHash); err != nil {
+	} else if err := checktype(val, TypeHash); err != nil {
 		return false, err
 	}
 	prevH := val.hashVal
@@ -249,9 +249,9 @@ func (s *InMemoryStore) Hget(key string, field string) (string, bool, error) {
 			return "", false, err
 		}
 		fieldVal, fieldCheck := val.hashVal[field]
-		if fieldCheck{
+		if fieldCheck {
 			return fieldVal, true, nil
-		}else {
+		} else {
 			return "", false, nil
 		}
 	}
@@ -267,12 +267,13 @@ func (s *InMemoryStore) Hget(key string, field string) (string, bool, error) {
 		if !found {
 			return "", false, nil
 		}
-		return val.strVal, true, nil
+		fieldVal, fieldFound := val.hashVal[field]
+		return fieldVal, fieldFound, nil
 	}
 	delete(s.items, key)
 	return "", false, nil
 }
-func (s* InMemoryStore) HgetALL(key string) (map[string]string, bool, error){
+func (s *InMemoryStore) HgetALL(key string) (map[string]string, bool, error) {
 	s.mu.RLock()
 	val, found := s.items[key]
 	if !found || !isExpired(val) {
@@ -283,7 +284,11 @@ func (s* InMemoryStore) HgetALL(key string) (map[string]string, bool, error){
 		if err := checktype(val, TypeHash); err != nil {
 			return nil, false, err
 		}
-		return val.hashVal, true, nil
+		copied := make(map[string]string, len(val.hashVal))
+		for k, v := range val.hashVal {
+			copied[k] = v
+		}
+		return copied, true, nil
 	}
 
 	s.mu.RUnlock()
@@ -297,7 +302,11 @@ func (s* InMemoryStore) HgetALL(key string) (map[string]string, bool, error){
 		if !found {
 			return nil, false, nil
 		}
-		return val.hashVal, true, nil
+		copied := make(map[string]string, len(val.hashVal))
+		for k, v := range val.hashVal {
+			copied[k] = v
+		}
+		return copied, true, nil
 	}
 	delete(s.items, key)
 	return nil, false, nil
