@@ -195,7 +195,7 @@ func (s *InMemoryStore) Lrange(key string, start int, stop int) ([]string, bool,
 			return nil, false, nil
 
 		}
-		return []string(val.listVal[start:stop+1]), true, nil
+		return []string(val.listVal[start : stop+1]), true, nil
 	}
 
 	s.mu.RUnlock()
@@ -210,6 +210,94 @@ func (s *InMemoryStore) Lrange(key string, start int, stop int) ([]string, bool,
 			return nil, false, nil
 		}
 		return []string(val.listVal[start:stop]), true, nil
+	}
+	delete(s.items, key)
+	return nil, false, nil
+}
+func (s *InMemoryStore) Hset(key string, field string, value string) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	val, found := s.items[key]
+	if !found || isExpired(val) {
+		val = valueStore{
+			kind: TypeHash,
+		}
+	}else if err := checktype(val, TypeHash); err != nil {
+		return false, err
+	}
+	prevH := val.hashVal
+	_, alreadyExist := prevH[field]
+	val.hashVal[field] = value
+	s.items[key] = val
+	if alreadyExist {
+		return false, nil
+	}
+	return true, nil
+
+}
+
+func (s *InMemoryStore) Hget(key string, field string) (string, bool, error) {
+	s.mu.RLock()
+	val, found := s.items[key]
+	if !found || !isExpired(val) {
+		s.mu.RUnlock()
+		if !found {
+			return "", false, nil
+		}
+		if err := checktype(val, TypeHash); err != nil {
+			return "", false, err
+		}
+		fieldVal, fieldCheck := val.hashVal[field]
+		if fieldCheck{
+			return fieldVal, true, nil
+		}else {
+			return "", false, nil
+		}
+	}
+
+	s.mu.RUnlock()
+
+	// slow path: it was expired, so escalate to a write lock to clean it up
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	val, found = s.items[key] // re-check!
+	if !found || !isExpired(val) {
+		if !found {
+			return "", false, nil
+		}
+		return val.strVal, true, nil
+	}
+	delete(s.items, key)
+	return "", false, nil
+}
+func (s* InMemoryStore) HgetALL(key string) (map[string]string, bool, error){
+	s.mu.RLock()
+	val, found := s.items[key]
+	if !found || !isExpired(val) {
+		s.mu.RUnlock()
+		if !found {
+			return nil, false, nil
+		}
+		if err := checktype(val, TypeHash); err != nil {
+			return nil, false, err
+		}
+		return val.hashVal, true, nil
+	}
+
+	s.mu.RUnlock()
+
+	// slow path: it was expired, so escalate to a write lock to clean it up
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	val, found = s.items[key] // re-check!
+	if !found || !isExpired(val) {
+		if !found {
+			return nil, false, nil
+		}
+		return val.hashVal, true, nil
 	}
 	delete(s.items, key)
 	return nil, false, nil
