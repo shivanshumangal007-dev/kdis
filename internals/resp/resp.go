@@ -180,15 +180,32 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		return rtStr.String()
 
 	case "SADD":
-		if len(args) < 3{
+		if len(args) < 3 {
 			return "-ERR wrong number of arguments for 'SADD' command\r\n"
 		}
 
 		Kint, err := s.Sadd(args[1], args[2:]...)
-		if err != nil{
+		if err != nil {
 			return fmt.Sprintf("-%s\r\n", err)
 		}
 		return fmt.Sprintf(":%d\r\n", Kint)
+
+	case "SMEMBERS":
+		if len(args) != 2 { // SMEMBERS key
+			return "-ERR wrong number of arguments for 'SMEMBERS' command\r\n"
+		}
+
+		members, err := s.Smembers(args[1])
+		if err != nil {
+			return fmt.Sprintf("-%s\r\n", err)
+		}
+		var rtStr strings.Builder
+		fmt.Fprintf(&rtStr, "*%d\r\n", len(members))
+		for _, m := range members {
+			fmt.Fprintf(&rtStr, "$%d\r\n%s\r\n", len(m), m)
+		}
+		return rtStr.String()
+
 	default:
 		return fmt.Sprintf("-ERR unknown command '%s'\r\n", cmd)
 	}

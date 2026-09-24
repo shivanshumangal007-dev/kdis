@@ -320,7 +320,7 @@ func (s *InMemoryStore) Sadd(key string, members ...string) (int, error) {
 
 	if !found || isExpired(val) {
 		val = valueStore{kind: TypeSet, setVal: map[string]struct{}{}}
-	} else if err := checktype(val, TypeHash); err != nil {
+	} else if err := checktype(val, TypeSet); err != nil {
 		return 0, err
 	}
 	newCnt := 0
@@ -330,5 +330,44 @@ func (s *InMemoryStore) Sadd(key string, members ...string) (int, error) {
 			newCnt++
 		}
 	}
+	s.items[key] = val
 	return newCnt, nil
+}
+
+func (s *InMemoryStore) Smembers(key string) ([]string, error) {
+	s.mu.RLock()
+	val, found := s.items[key]
+	if !found || !isExpired(val) {
+		s.mu.RUnlock()
+		if !found {
+			return []string{}, nil
+		}
+		if err := checktype(val, TypeSet); err != nil {
+			return []string{}, err
+		}
+		members := make([]string, 0, len(val.setVal))
+		for member := range val.setVal {
+			members = append(members, member)
+		}
+		return members, nil
+	}
+
+	s.mu.RUnlock()
+
+	// slow path: it was expired, so escalate to a write lock to clean it up
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	val, found = s.items[key] // re-check!
+	if !found || !isExpired(val) {
+		if !found {
+			return []string{}, nil
+		}
+		members := make([]string, 0, len(val.setVal))
+		for member := range val.setVal {
+			members = append(members, member)
+		}
+		return members, nil
+	}
+	delete(s.items, key)
+	return []string{}, nil
 }
