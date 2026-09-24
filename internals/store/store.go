@@ -371,3 +371,20 @@ func (s *InMemoryStore) Smembers(key string) ([]string, error) {
 	delete(s.items, key)
 	return []string{}, nil
 }
+
+
+func (s *InMemoryStore) Sismember(key string, member string) (bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	val, found := s.items[key]
+	if !found || isExpired(val) {
+		return false, nil
+	}
+	if err := checktype(val, TypeSet); err != nil {
+		return false, err
+	}
+
+	_, exists := val.setVal[member]
+	return exists, nil
+}

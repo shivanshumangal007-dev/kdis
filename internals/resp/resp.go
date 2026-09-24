@@ -206,6 +206,19 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		}
 		return rtStr.String()
 
+	case "SISMEMBER":
+		if len(args) != 3 { // SISMEMBER key member
+			return "-ERR wrong number of arguments for 'SISMEMBER' command\r\n"
+		}
+
+		exist, err := s.Sismember(args[1], args[2])
+		if err != nil {
+			return fmt.Sprintf("-%s\r\n", err)
+		}
+		if exist{
+			return ":1\r\n"
+		}
+		return ":0\r\n"
 	default:
 		return fmt.Sprintf("-ERR unknown command '%s'\r\n", cmd)
 	}
