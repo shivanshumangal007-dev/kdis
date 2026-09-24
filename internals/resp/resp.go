@@ -178,6 +178,17 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		}
 
 		return rtStr.String()
+
+	case "SADD":
+		if len(args) < 3{
+			return "-ERR wrong number of arguments for 'SADD' command\r\n"
+		}
+
+		Kint, err := s.Sadd(args[1], args[2:]...)
+		if err != nil{
+			return fmt.Sprintf("-%s\r\n", err)
+		}
+		return fmt.Sprintf(":%d\r\n", Kint)
 	default:
 		return fmt.Sprintf("-ERR unknown command '%s'\r\n", cmd)
 	}

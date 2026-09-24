@@ -221,7 +221,7 @@ func (s *InMemoryStore) Hset(key string, field string, value string) (bool, erro
 	val, found := s.items[key]
 	if !found || isExpired(val) {
 		val = valueStore{
-			kind: TypeHash,
+			kind:    TypeHash,
 			hashVal: map[string]string{},
 		}
 	} else if err := checktype(val, TypeHash); err != nil {
@@ -310,4 +310,25 @@ func (s *InMemoryStore) HgetALL(key string) (map[string]string, bool, error) {
 	}
 	delete(s.items, key)
 	return nil, false, nil
+}
+
+func (s *InMemoryStore) Sadd(key string, members ...string) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	val, found := s.items[key]
+
+	if !found || isExpired(val) {
+		val = valueStore{kind: TypeSet, setVal: map[string]struct{}{}}
+	} else if err := checktype(val, TypeHash); err != nil {
+		return 0, err
+	}
+	newCnt := 0
+	for _, member := range members {
+		if _, exists := val.setVal[member]; !exists {
+			val.setVal[member] = struct{}{}
+			newCnt++
+		}
+	}
+	return newCnt, nil
 }
