@@ -3,6 +3,7 @@ package helpers
 import (
 	"bufio"
 	"net"
+	"strings"
 
 	"github.com/shivanshumangal007-dev/kdis/internals/resp"
 	"github.com/shivanshumangal007-dev/kdis/internals/store"
@@ -18,8 +19,22 @@ func HandleConnection(conn net.Conn, s *store.InMemoryStore) {
 			return
 		}
 
+		if shouldPersist(args) {
+			if err := Writter(args); err != nil {
+				return
+			}
+		}
 		ans := dispatch(args, s)
 		conn.Write([]byte(ans))
+	}
+}
+
+func shouldPersist(args []string) bool {
+	switch strings.ToUpper(args[0]) {
+	case "SET", "DEL", "EXPIRE", "LPUSH", "RPUSH", "HSET", "SADD":
+		return true
+	default:
+		return false
 	}
 }
 
