@@ -6,12 +6,13 @@ import (
 	"os"
 
 	"github.com/shivanshumangal007-dev/kdis/internals/helpers"
+	"github.com/shivanshumangal007-dev/kdis/internals/pubsub"
 	"github.com/shivanshumangal007-dev/kdis/internals/store"
 )
 
 func main() {
 	s := store.NewInMemoryStore()
-
+	ps := pubsub.NewPubsubStore()
 	if err := helpers.ReaderLineByLine(s); err != nil && !os.IsNotExist(err) {
 		fmt.Println("failed to replay access.log:", err)
 		return
@@ -36,6 +37,6 @@ func main() {
 			return
 		}
 		// fmt.Println("got one connection:" , conn.LocalAddr())
-		go helpers.HandleConnection(conn, s)
+		go helpers.HandleConnection(conn, s, ps)
 	}
 }

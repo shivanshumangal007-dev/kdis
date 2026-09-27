@@ -5,11 +5,12 @@ import (
 	"net"
 	"strings"
 
+	"github.com/shivanshumangal007-dev/kdis/internals/pubsub"
 	"github.com/shivanshumangal007-dev/kdis/internals/resp"
 	"github.com/shivanshumangal007-dev/kdis/internals/store"
 )
 
-func HandleConnection(conn net.Conn, s *store.InMemoryStore) {
+func HandleConnection(conn net.Conn, s *store.InMemoryStore, ps *pubsub.PubsubStore) {
 	defer conn.Close()
 	reader := bufio.NewReader(conn)
 	// buf := make([]byte, 1024)
@@ -24,7 +25,14 @@ func HandleConnection(conn net.Conn, s *store.InMemoryStore) {
 				return
 			}
 		}
-		ans := dispatch(args, s)
+		var ans string
+
+		switch args[0] {
+		case "SUBSCRIBE":
+			ans = dispatchSubs(args, ps)
+		default:
+			ans = dispatch(args, s)
+		}
 		conn.Write([]byte(ans))
 	}
 }
@@ -44,4 +52,10 @@ func dispatch(args []string, s *store.InMemoryStore) string {
 	}
 
 	return resp.RespReplyEncoder(args, s)
+}
+func dispatchSubs(args []string, ps *pubsub.PubsubStore) string{
+	if len(args) == 0 {
+		return "-ERR empty commands\r\n"
+	}
+	return ""
 }
