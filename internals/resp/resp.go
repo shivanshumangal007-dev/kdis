@@ -5,10 +5,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/shivanshumangal007-dev/kdis/internals/pubsub"
 	"github.com/shivanshumangal007-dev/kdis/internals/store"
 )
 
-func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
+func RespReplyEncoder(args []string, s *store.InMemoryStore, ps *pubsub.PubsubStore) string {
 	cmd := strings.ToUpper(args[0])
 
 	switch cmd {
@@ -215,10 +216,22 @@ func RespReplyEncoder(args []string, s *store.InMemoryStore) string {
 		if err != nil {
 			return fmt.Sprintf("-%s\r\n", err)
 		}
-		if exist{
+		if exist {
 			return ":1\r\n"
 		}
 		return ":0\r\n"
+	case "PUBLISH":
+		if len(args) != 3 {
+			return "-ERR wrong number of arguments for 'PUBLISH' command\r\n"
+		}
+		if ps == nil {
+			return "-ERR internal error ps not defined"
+		}
+		count, err := ps.Publish(args[1], args[2])
+		if err != nil {
+			return fmt.Sprintf("-%s\r\n", err)
+		}
+		return fmt.Sprintf(":%d\r\n", count)
 	default:
 		return fmt.Sprintf("-ERR unknown command '%s'\r\n", cmd)
 	}

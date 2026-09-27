@@ -30,7 +30,7 @@ func ReaderLineByLine(s *store.InMemoryStore) error {
 			fmt.Printf("%s ", d)
 		}
 		fmt.Print("\n")
-		dispatch(args, s)
+		dispatch(args, s, nil)
 	}
 	return nil
 }

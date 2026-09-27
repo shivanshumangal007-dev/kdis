@@ -1,18 +1,23 @@
 package pubsub
 
-import "slices"
+import (
+	"fmt"
+	"slices"
+)
 
-func (ps *PubsubStore) NewSubsciber(channelName string) <-chan string {
+func (ps *PubsubStore) NewSubsciber(channelName string) chan string {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
 	c, found := ps.channels[channelName]
 	subChannel := make(chan string)
 	if !found { // channel not exist already
-		c = make([]chan string, 0)
+		c = make([]chan string, 8)
 	}
 	// if channel exist
+	fmt.Printf("creating subscriber for channel name: %s", channelName)
 	c = append(c, subChannel)
+	ps.channels[channelName] = c
 	return subChannel
 }
 
@@ -34,4 +39,5 @@ func (ps *PubsubStore) QuitSubsciber(subChannel chan string) {
 			}
 		}
 	}
+	fmt.Print("clossing channel for subscriber on close connection")
 }

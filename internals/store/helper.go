@@ -24,7 +24,7 @@ func ExpiredKeysRemover(s *InMemoryStore) {
 	for range ticker.C {
 		s.mu.Lock()
 		for key, val := range s.items {
-			fmt.Printf("checking for %s \n", key)
+			// fmt.Printf("checking for %s \n", key)
 			if isExpired(val) {
 				delete(s.items, key)
 				fmt.Println("expired key found")
