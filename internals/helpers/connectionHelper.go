@@ -52,6 +52,7 @@ func HandleConnection(conn net.Conn, s *store.InMemoryStore, ps *pubsub.PubsubSt
 }
 
 func shouldPersist(args []string) bool {
+	// return false               //uncomment this line to turn off writter to the file
 	switch strings.ToUpper(args[0]) {
 	case "SET", "DEL", "EXPIRE", "LPUSH", "RPUSH", "HSET", "SADD":
 		return true
