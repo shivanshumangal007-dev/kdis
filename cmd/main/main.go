@@ -30,6 +30,7 @@ func main() {
 	fmt.Println("listening on the port: ", port)
 
 	go store.ExpiredKeysRemover(s)
+	go helpers.Executer(s, ps)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {

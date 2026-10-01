@@ -9,8 +9,8 @@ func isExpired(v valueStore) bool {
 	return !v.expiresAt.IsZero() && time.Now().After(v.expiresAt)
 }
 
-func checktype(v valueStore, wanted ValueType) error{
-	if v.kind != wanted{
+func checktype(v valueStore, wanted ValueType) error {
+	if v.kind != wanted {
 		return fmt.Errorf("WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 	return nil

@@ -11,6 +11,11 @@ import (
 	"github.com/shivanshumangal007-dev/kdis/internals/store"
 )
 
+type command struct{
+	args []string
+	replyChl chan string
+}
+
 func HandleConnection(conn net.Conn, s *store.InMemoryStore, ps *pubsub.PubsubStore) {
 	defer conn.Close()
 	var subChan []chan string
@@ -34,7 +39,6 @@ func HandleConnection(conn net.Conn, s *store.InMemoryStore, ps *pubsub.PubsubSt
 				return
 			}
 		}
-		var ans string
 		cmd := strings.ToUpper(args[0])
 		switch cmd {
 		case "SUBSCRIBE":
@@ -45,7 +49,12 @@ func HandleConnection(conn net.Conn, s *store.InMemoryStore, ps *pubsub.PubsubSt
 				subChan = append(subChan, subChannel)
 			}
 		default:
-			ans = dispatch(args, s, ps)
+			// ans := dispatch(args, s, ps)
+
+			replyChl := make(chan string)
+			commandQueue <- command{args: args, replyChl: replyChl}
+			ans :=  <- replyChl
+			
 			conn.Write([]byte(ans))
 		}
 	}
@@ -93,4 +102,15 @@ func dispatchSubs(args []string, ps *pubsub.PubsubStore, conn net.Conn) (chan st
 		len(subchannelName), subchannelName))
 
 	return newSubs, nil
+}
+
+var commandQueue = make(chan command, 1000)
+
+func Executer(s *store.InMemoryStore , ps *pubsub.PubsubStore) {
+	fmt.Print("executer started for v2 check")
+	for cmd := range commandQueue {
+		ans := dispatch(cmd.args, s, ps)
+		rep := cmd.replyChl
+		rep <- ans
+	}
 }
