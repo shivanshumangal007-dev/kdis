@@ -56,7 +56,7 @@ func goConnection(id int, wg *sync.WaitGroup) {
 func main() {
 	start := time.Now()
 	var wg sync.WaitGroup
-	workers := 50
+	workers := 30
 	commandsPerWorker := 10000
 
 	for i := 0; i < workers; i++ {

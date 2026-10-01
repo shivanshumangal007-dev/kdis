@@ -26,7 +26,7 @@ func goConnection(id int, wg *sync.WaitGroup) {
 	}
 	defer wg.Done()
 	defer conn.Close()
-	cnt := 10000
+	cnt := 1000
 	reader := bufio.NewReader(conn)
 	for i := 0; i < cnt; i++ {
 
@@ -68,8 +68,8 @@ func goConnection(id int, wg *sync.WaitGroup) {
 func main() {
 	start := time.Now()
 	var wg sync.WaitGroup
-	workers := 50
-	commandsPerWorker := 10000
+	workers := 30
+	commandsPerWorker := 1000
 
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
