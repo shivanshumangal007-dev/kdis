@@ -24,7 +24,7 @@ func HandleConnection(conn net.Conn, s *store.InMemoryStore, ps *pubsub.PubsubSt
 	reader := bufio.NewReader(conn)
 	// buf := make([]byte, 1024)
 	for {
-		args, err := readCommand(reader)
+		args, err := ReadCommand(reader)
 		if err != nil {
 			return
 		}
@@ -45,7 +45,7 @@ func HandleConnection(conn net.Conn, s *store.InMemoryStore, ps *pubsub.PubsubSt
 				subChan = append(subChan, subChannel)
 			}
 		default:
-			ans = dispatch(args, s, ps)
+			ans = Dispatch(args, s, ps)
 			conn.Write([]byte(ans))
 		}
 	}
@@ -61,7 +61,7 @@ func shouldPersist(args []string) bool {
 	}
 }
 
-func dispatch(args []string, s *store.InMemoryStore, ps *pubsub.PubsubStore) string {
+func Dispatch(args []string, s *store.InMemoryStore, ps *pubsub.PubsubStore) string {
 	if len(args) == 0 {
 		return "-ERR empty commands\r\n"
 	}
@@ -74,7 +74,7 @@ func dispatchSubs(args []string, ps *pubsub.PubsubStore, conn net.Conn) (chan st
 	}
 	cmd := strings.ToUpper(args[0])
 	if cmd != "SUBSCRIBE" {
-		return nil,fmt.Errorf("-WRONG dispatch funcion\r\n")
+		return nil,fmt.Errorf("-WRONG Dispatch funcion\r\n")
 	}
 	if len(args) != 2 {
 		return nil,fmt.Errorf("-ERR wrong number of arguments for 'SUBSCRIBE' command\r\n")

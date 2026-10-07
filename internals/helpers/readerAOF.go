@@ -18,7 +18,7 @@ func ReaderLineByLine(s *store.InMemoryStore) error {
 	scanner := bufio.NewReader(d)
 
 	for {
-		args, err := readCommand(scanner)
+		args, err := ReadCommand(scanner)
 		if err == io.EOF {
 			break
 		}
@@ -30,7 +30,7 @@ func ReaderLineByLine(s *store.InMemoryStore) error {
 			fmt.Printf("%s ", d)
 		}
 		fmt.Print("\n")
-		dispatch(args, s, nil)
+		Dispatch(args, s, nil)
 	}
 	return nil
 }

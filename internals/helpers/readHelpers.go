@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func readCommand(reader *bufio.Reader) ([]string, error) {
+func ReadCommand(reader *bufio.Reader) ([]string, error) {
 	line, err := reader.ReadString('\n')
 	if err != nil {
 		return nil, err
