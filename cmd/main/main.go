@@ -76,6 +76,6 @@ func main() {
 			return
 		}
 		// fmt.Println("got one connection:" , conn.LocalAddr())
-		go helpers.HandleConnection(conn, s, ps)
+		go helpers.HandleConnection(conn, s, ps, raftNode)
 	}
 }
