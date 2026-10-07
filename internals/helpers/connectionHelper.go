@@ -29,11 +29,11 @@ func HandleConnection(conn net.Conn, s *store.InMemoryStore, ps *pubsub.PubsubSt
 			return
 		}
 
-		if shouldPersist(args) {
-			if err := Writter(args); err != nil {
-				return
-			}
-		}
+		// if shouldPersist(args) {
+		// 	if err := Writter(args); err != nil {
+		// 		return
+		// 	}
+		// }
 		var ans string
 		cmd := strings.ToUpper(args[0])
 		switch cmd {

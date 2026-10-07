@@ -32,3 +32,5 @@ func (f *KdisFSM) Snapshot() (raft.FSMSnapshot, error) {
 func (f *KdisFSM) Restore(rc io.ReadCloser) error {
 	return nil
 }
+
+var _ raft.FSM = (*KdisFSM)(nil)
