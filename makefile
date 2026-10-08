@@ -1,8 +1,12 @@
 run:
 	go run ./cmd/main 
-build: 
-	go build -o output/kdis.exe ./cmd/main 
-
+build-mac: 
+	go build -o bin/kdis_mac.exe ./cmd/main 
+build-win:
+	GOOS=windows GOARCH=amd64 go build -o bin/kdis_win.exe ./cmd/main 
+build:
+	${MAKE} build-mac
+	${MAKE} build-win
 run-bench-set:
 	go run ./bench-set .
 
